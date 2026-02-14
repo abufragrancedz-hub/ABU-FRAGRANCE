@@ -252,6 +252,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                 <Building2 className="w-8 h-8 mb-1" />
                                 <span className="font-bold text-sm text-center">{getDeliveryTypeLabel('office')}</span>
                                 <span className="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full" dir="ltr">{selectedWilaya.officePrice} {t('currency')}</span>
+                                <span className="text-[10px] opacity-70 text-center leading-tight mt-1 px-1 font-medium">
+                                    {language === 'ar' ? '*حسب توفر المكتب' : '*Subject to availability'}
+                                </span>
                             </button>
                             <button
                                 type="button"
@@ -282,8 +285,8 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                         </p>
                                         <p className="text-xs text-blue-700 font-bold leading-relaxed opacity-80">
                                             {language === 'ar'
-                                                ? `سيتم إرسال طردك إلى المكتب الرئيسي لشركة Anderson/EcoTrack في مركز ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. ستتلقى مكالمة هاتفية بمجرد وصول طلبك لتستلمه من هناك.`
-                                                : `Your order will be sent to the main Anderson/EcoTrack office in the center of ${selectedWilaya.name} Wilaya. You will receive a phone call once it arrives for pickup.`
+                                                ? `سيتم إرسال طردك إلى المكتب الرئيسي لشركة Anderson/EcoTrack في مركز ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. ستتلقى مكالمة هاتفية بمجرد وصول طلبك لتستلمه من هناك. (ملاحظة: إذا لم يتوفر مكتب في بلديتك، سيتم التوصيل إلى المنزل تلقائياً).`
+                                                : `Your order will be sent to the main Anderson/EcoTrack office in the center of ${selectedWilaya.name} Wilaya. You will receive a phone call once it arrives for pickup. (Note: If unavailable in your commune, it will be delivered to your home automatically).`
                                             }
                                         </p>
                                     </div>
