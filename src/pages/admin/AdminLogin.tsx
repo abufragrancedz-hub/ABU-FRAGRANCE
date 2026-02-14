@@ -51,7 +51,7 @@ export const AdminLogin: React.FC = () => {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             className="input-field"
-                            placeholder="admin@abufragrance.com"
+                            dir="ltr"
                         />
                     </div>
                     <div>
@@ -61,7 +61,7 @@ export const AdminLogin: React.FC = () => {
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             className="input-field"
-                            placeholder="••••••••"
+                            dir="ltr"
                         />
                     </div>
                     <button type="submit" className="w-full btn-primary py-4 text-lg">

@@ -86,7 +86,7 @@ export const translations = {
         cashOnDelivery: 'الدفع عند الاستلام',
         support247: 'دعم 24/7',
         qualityGuaranteed: 'جودة مضمونة',
-        selectSize: 'اختر المقاس',
+        selectSize: 'اختر الحجم',
         chooseQuantity: 'اختر الكمية',
         totalPayable: 'المجموع الإجمالي',
         finalStep: 'الخطوة الأخيرة',
@@ -101,7 +101,8 @@ export const translations = {
         pack: 'باقة',
         save: 'وفر',
         selectedPack: 'الباقة المختارة',
-        saving: 'توفير'
+        saving: 'توفير',
+        whatsappCta: 'تواصل معنا مباشرة، اضغط هنا'
     },
     en: {
         logoText: 'Abu Fragrance ',
@@ -203,7 +204,8 @@ export const translations = {
         pack: 'Pack',
         save: 'Save',
         selectedPack: 'Selected Pack',
-        saving: 'Saving'
+        saving: 'Saving',
+        whatsappCta: 'Contact us directly, click here'
     },
     fr: {
         logoText: 'Abu Fragrance',
@@ -305,6 +307,7 @@ export const translations = {
         pack: 'Pack',
         save: 'Economisez',
         selectedPack: 'Pack sélectionné',
-        saving: 'Économie'
+        saving: 'Économie',
+        whatsappCta: 'Contactez-nous directement, cliquez ici'
     }
 };

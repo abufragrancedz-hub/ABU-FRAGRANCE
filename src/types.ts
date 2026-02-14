@@ -12,6 +12,16 @@ export interface ProductSize {
     discounts?: QuantityDiscount[];  // quantity-based discounts for this specific size
 }
 
+export interface StopDesk {
+    id: number | string;
+    name: string;
+    address?: string;
+    wilaya_id?: number | string;
+    commune_id?: number | string;
+    commune_name?: string;
+    phone?: string;
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -51,6 +61,7 @@ export interface Order {
     date: string;
     carrier?: 'ecotrack';
     trackingNumber?: string;
+    stopDesk?: StopDesk;
 }
 
 export interface Wilaya {

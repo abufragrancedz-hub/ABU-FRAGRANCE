@@ -103,3 +103,17 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-[#D4AF37]/60 rounded-full hover:bg-[#4A0404] transition-colors;
 }
+
+/* Slow bounce for WhatsApp CTA */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}

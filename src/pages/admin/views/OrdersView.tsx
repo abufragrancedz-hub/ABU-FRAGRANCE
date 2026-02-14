@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, CheckCircle, Clock, Truck, ExternalLink, X, Box, RefreshCw, FileText, FileSpreadsheet, Eye, MapPin, Phone, User, RotateCcw, Home, Building2 } from 'lucide-react';
+import { Trash2, CheckCircle, Clock, Truck, ExternalLink, X, Box, RefreshCw, FileText, FileSpreadsheet, Eye, MapPin, Phone, User, RotateCcw, Home, Building2, Search } from 'lucide-react';
 import { Order, DeliveryType } from '../../../types';
 import { CARRIERS, getTrackingUrl, Carrier } from '../../../utils/tracking';
 import { exportOrdersToPDF, exportOrdersToExcel } from '../../../utils/export';
@@ -24,6 +24,20 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [shippingModalOpen, setShippingModalOpen] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredOrders = orders.filter(order => {
+        const q = searchQuery.toLowerCase();
+        return (
+            order.id.toLowerCase().includes(q) ||
+            order.customer.fullName.toLowerCase().includes(q) ||
+            order.customer.phone.includes(q) ||
+            (order.trackingNumber && order.trackingNumber.toLowerCase().includes(q)) ||
+            order.customer.wilaya.toLowerCase().includes(q) ||
+            (order.customer.commune && order.customer.commune.toLowerCase().includes(q))
+        );
+    });
+
     const [shippingForm, setShippingForm] = useState<{ carrier: Carrier, trackingNumber: string, deliveryType: DeliveryType }>({
         carrier: 'ecotrack',
         trackingNumber: '',
@@ -44,6 +58,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
         });
         setShippingModalOpen(true);
     };
+
     const checkOrderStatuses = async () => {
         setIsSyncing(true);
         const shippedOrders = orders.filter(o => o.status === 'shipped' && o.trackingNumber);
@@ -53,9 +68,8 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                 const provider = getDeliveryProvider(order.carrier || 'ecotrack');
                 if (!provider) continue;
 
-                // Fetch credentials from Firestore
-                const q = query(collection(db, 'delivery_config'), where('carrier_id', '==', order.carrier), limit(1));
-                const snapshot = await getDocs(q);
+                const qq = query(collection(db, 'delivery_config'), where('carrier_id', '==', order.carrier), limit(1));
+                const snapshot = await getDocs(qq);
                 const config = snapshot.empty ? null : snapshot.docs[0].data();
 
                 const credentials = config ? { apiId: config.api_id, apiToken: config.api_token } : undefined;
@@ -74,7 +88,6 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
     const handleAutoSync = async () => {
         if (!selectedOrder) return;
 
-        // Prevent accidental duplicate syncing
         if (selectedOrder.trackingNumber || shippingForm.trackingNumber) {
             const proceed = window.confirm("This order already has a tracking number. Syncing again will create a duplicate in the delivery company dashboard. Do you want to proceed?");
             if (!proceed) return;
@@ -84,18 +97,15 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
         try {
             const provider = getDeliveryProvider(shippingForm.carrier);
             if (provider) {
-                // Fetch credentials from Firestore
-                const q = query(collection(db, 'delivery_config'), where('carrier_id', '==', shippingForm.carrier), limit(1));
-                const snapshot = await getDocs(q);
+                const qq = query(collection(db, 'delivery_config'), where('carrier_id', '==', shippingForm.carrier), limit(1));
+                const snapshot = await getDocs(qq);
                 const config = snapshot.empty ? null : snapshot.docs[0].data();
 
                 const credentials = config ? { apiId: config.api_id, apiToken: config.api_token } : undefined;
 
-                // Use current form settings for the sync
                 const orderToSync = { ...selectedOrder, deliveryType: shippingForm.deliveryType };
                 const result = await provider.createOrder(orderToSync, credentials);
 
-                // If the provider automatically switched delivery type (e.g. EcoTrack StopDesk -> Domicile)
                 const finalDeliveryType = (result.actualDeliveryType as DeliveryType) || shippingForm.deliveryType;
 
                 setShippingForm(prev => ({
@@ -104,12 +114,11 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                     deliveryType: finalDeliveryType
                 }));
 
-                // Update the order immediately with the tracking number AND the potentially new delivery type
                 await updateOrder(selectedOrder.id, {
                     carrier: shippingForm.carrier,
                     trackingNumber: result.trackingNumber,
                     deliveryType: finalDeliveryType,
-                    status: 'shipped' // Auto-move to shipped if synced? Or just save tracking. 
+                    status: 'shipped'
                 });
 
                 let msg = "Order Synced Successfully!\nTracking: " + result.trackingNumber;
@@ -145,9 +154,25 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors">
-            <div className="p-6 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Orders</h2>
-                <div className="flex items-center gap-4">
+            {/* Header with Search */}
+            <div className="p-6 border-b border-gray-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Orders</h2>
+                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">{filteredOrders.length}</span>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                    {/* Search Bar */}
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                            type="text"
+                            placeholder="Search name, phone, ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        />
+                    </div>
                     {/* Export Buttons */}
                     <div className="flex gap-2 mr-2">
                         <button
@@ -179,11 +204,11 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                         <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
                         {isSyncing ? 'Checking...' : 'Check Status'}
                     </button>
-                    <span className="text-sm text-gray-500">{orders.length} total</span>
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead>
                         <tr className="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 border-b border-gray-100 dark:border-slate-700">
@@ -196,7 +221,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                        {orders.map((order) => (
+                        {filteredOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                                 <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</td>
                                 <td className="px-6 py-4">
@@ -234,66 +259,162 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                                         <span className="text-xs text-gray-400">-</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 text-right space-x-2 flex justify-end items-center">
-                                    <button
-                                        onClick={() => openDetailsModal(order)}
-                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                                        title="View Details"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-
-                                    {order.status === 'pending' && (
+                                <td className="px-4 py-4">
+                                    <div className="flex flex-wrap justify-end items-center gap-1.5">
                                         <button
-                                            onClick={() => {
-                                                if (window.confirm('Are you sure you want to confirm this order?')) {
-                                                    updateOrder(order.id, { status: 'confirmed' });
-                                                }
-                                            }}
-                                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-emerald-500 hover:bg-secondary rounded-lg transition-all shadow-sm active:scale-95"
-                                            title="Confirm Order"
+                                            onClick={() => openDetailsModal(order)}
+                                            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex-shrink-0"
+                                            title="View Details"
                                         >
-                                            <CheckCircle className="w-4 h-4 leading-none" />
-                                            <span>Confirm</span>
+                                            <Eye className="w-4 h-4" />
                                         </button>
-                                    )}
 
-                                    {order.status === 'confirmed' && (
-                                        <button
-                                            onClick={() => {
-                                                if (window.confirm('Revert order to PENDING?')) {
-                                                    updateOrder(order.id, { status: 'pending' });
-                                                }
-                                            }}
-                                            className="p-2 text-orange-500 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
-                                            title="Undo Confirmation (Revert to Pending)"
-                                        >
-                                            <RotateCcw className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                        {order.status === 'pending' && (
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Are you sure you want to confirm this order?')) {
+                                                        updateOrder(order.id, { status: 'confirmed' });
+                                                    }
+                                                }}
+                                                className="flex items-center gap-2 px-3 py-1.5 min-h-[36px] text-xs font-bold uppercase tracking-wider text-white bg-emerald-500 hover:bg-secondary rounded-lg transition-all shadow-sm active:scale-95 flex-shrink-0"
+                                                title="Confirm Order"
+                                            >
+                                                <CheckCircle className="w-4 h-4 leading-none" />
+                                                <span>Confirm</span>
+                                            </button>
+                                        )}
 
-                                    {(order.status === 'confirmed' || order.status === 'shipped') && (
+                                        {order.status === 'confirmed' && (
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Revert order to PENDING?')) {
+                                                        updateOrder(order.id, { status: 'pending' });
+                                                    }
+                                                }}
+                                                className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-orange-500 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors flex-shrink-0"
+                                                title="Undo Confirmation (Revert to Pending)"
+                                            >
+                                                <RotateCcw className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        {(order.status === 'confirmed' || order.status === 'shipped') && (
+                                            <button
+                                                onClick={() => openShippingModal(order)}
+                                                className="flex items-center gap-2 px-3 py-1.5 min-h-[36px] text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm active:scale-95 flex-shrink-0"
+                                                title="Update Shipping"
+                                            >
+                                                <Truck className="w-4 h-4 leading-none" />
+                                                <span>{order.status === 'shipped' ? 'Update' : 'Delivery'}</span>
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => openShippingModal(order)}
-                                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm active:scale-95"
-                                            title="Update Shipping"
+                                            onClick={() => deleteOrder(order.id)}
+                                            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                            title="Delete Order"
                                         >
-                                            <Truck className="w-4 h-4 leading-none" />
-                                            <span>{order.status === 'shipped' ? 'Update' : 'Delivery'}</span>
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
-                                    )}
-                                    <button
-                                        onClick={() => deleteOrder(order.id)}
-                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete Order"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4 p-4 bg-gray-50 dark:bg-slate-900/50">
+                {filteredOrders.map((order) => (
+                    <div key={order.id} className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-white">Order #{order.id.slice(0, 8)}</h3>
+                                <p className="text-xs text-gray-500 mt-1">{new Date(order.date).toLocaleDateString()}</p>
+                            </div>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                                ${order.status === 'confirmed' ? 'bg-secondary/10 text-secondary' :
+                                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                        order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-gray-100 text-gray-600'}`}>
+                                {order.status}
+                            </span>
+                        </div>
+
+                        <div className="space-y-3 mb-5 border-t border-b border-gray-50 dark:border-slate-700 py-3">
+                            <div className="flex items-start gap-3">
+                                <User className="w-4 h-4 text-gray-400 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{order.customer.fullName}</p>
+                                    <p className="text-xs text-gray-500">{order.customer.wilaya}, {order.customer.commune}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <p className="text-sm text-gray-600 dark:text-gray-300 font-mono tracking-wide">{order.customer.phone}</p>
+                            </div>
+                            <div className="flex justify-between items-center pt-1">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total</span>
+                                <span className="text-lg font-black text-blue-600">{order.total} DZD</span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Primary Actions */}
+                            {order.status === 'pending' && (
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('Are you sure you want to confirm this order?')) {
+                                            updateOrder(order.id, { status: 'confirmed' });
+                                        }
+                                    }}
+                                    className="flex-1 bg-emerald-500 text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 hover:bg-emerald-600"
+                                >
+                                    <CheckCircle className="w-4 h-4" /> Confirm
+                                </button>
+                            )}
+
+                            {(order.status === 'confirmed' || order.status === 'shipped') && (
+                                <button
+                                    onClick={() => openShippingModal(order)}
+                                    className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 hover:bg-blue-700"
+                                >
+                                    <Truck className="w-4 h-4" /> {order.status === 'shipped' ? 'Update' : 'Ship'}
+                                </button>
+                            )}
+
+                            {/* Secondary Actions Row */}
+                            <div className="flex w-full gap-2 mt-2">
+                                <button
+                                    onClick={() => openDetailsModal(order)}
+                                    className="flex-1 bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-gray-200 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 hover:bg-gray-200"
+                                >
+                                    <Eye className="w-4 h-4" /> View
+                                </button>
+
+                                {order.status === 'confirmed' && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('Revert order to PENDING?')) {
+                                                updateOrder(order.id, { status: 'pending' });
+                                            }
+                                        }}
+                                        className="w-10 h-10 flex items-center justify-center bg-orange-50 text-orange-600 rounded-lg border border-orange-100 flex-shrink-0"
+                                    >
+                                        <RotateCcw className="w-4 h-4" />
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={() => deleteOrder(order.id)}
+                                    className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-lg border border-red-100 hover:bg-red-100 flex-shrink-0"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Order Details Modal */}

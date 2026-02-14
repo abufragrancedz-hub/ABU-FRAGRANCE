@@ -308,20 +308,9 @@ export const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* Checkout Section directly integrated */}
-                <div ref={checkoutRef} className="mt-12 md:mt-20 lg:mt-32 pt-12 md:pt-20 border-t-2 border-blue-100/50">
-                    <div className="max-w-4xl mx-auto px-2">
-                        <div className="text-center mb-8 md:mb-12 lg:mb-16 space-y-3 md:space-y-4">
-                            <div className="inline-block px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 rounded-full text-blue-700 font-black text-xs md:text-sm uppercase tracking-widest mb-2 md:mb-4">
-                                {t('finalStep')}
-                            </div>
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-blue-900 font-arabic leading-tight">{t('confirmOrder')}</h2>
-                            <p className="text-blue-500 text-sm md:text-lg lg:text-xl font-bold max-w-xl mx-auto">
-                                {t('fillDetails')}
-                            </p>
-                        </div>
-                        <div className="glass-card p-4 md:p-8 lg:p-12">
-                            <CheckoutForm items={[checkoutItem]} />
-                        </div>
+                <div ref={checkoutRef} className="mt-8 md:mt-16 pt-8 md:pt-12 border-t border-blue-100">
+                    <div className="max-w-3xl mx-auto">
+                        <CheckoutForm items={[checkoutItem]} />
                     </div>
                 </div>
             </div>

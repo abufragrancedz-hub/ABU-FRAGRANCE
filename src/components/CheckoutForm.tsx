@@ -5,9 +5,10 @@ import { wilayas, getDeliveryPrice } from '../data/wilayas';
 import { getCommunesByWilayaId } from '../data/communes';
 import { sendOrderToTelegram } from '../utils/telegram';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ShieldCheck, Truck, Building2, Home, MapPin } from 'lucide-react';
-import { CartItem, DeliveryType } from '../types';
+import { Loader2, ShieldCheck, Truck, Building2, Home, MapPin, MapPinned } from 'lucide-react';
+import { CartItem, DeliveryType, StopDesk } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { ecotrackProvider } from '../services/delivery/ecotrack';
 
 interface CheckoutInputs {
     fullName: string;
@@ -32,6 +33,35 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
     const [deliveryType, setDeliveryType] = useState<DeliveryType>('domicile');
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [availableCommunes, setAvailableCommunes] = useState<any[]>([]);
+
+    // Stop Desk Logic
+    const [stopDesks, setStopDesks] = useState<StopDesk[]>([]);
+    const [selectedStopDeskId, setSelectedStopDeskId] = useState<string>('');
+    const [isLoadingDesks, setIsLoadingDesks] = useState(false);
+
+    useEffect(() => {
+        if (deliveryType === 'office' && selectedWilayaId) {
+            setIsLoadingDesks(true);
+            setStopDesks([]);
+            setSelectedStopDeskId('');
+
+            if (ecotrackProvider.getStopDesks) {
+                console.log("Fetching desks for wilaya:", selectedWilayaId);
+                ecotrackProvider.getStopDesks(Number(selectedWilayaId))
+                    .then(desks => {
+                        console.log("Desks fetched:", desks);
+                        setStopDesks(desks);
+                        if (desks.length > 0) {
+                            setSelectedStopDeskId(String(desks[0].id));
+                        }
+                    })
+                    .catch(err => console.error("Failed to load stop desks", err))
+                    .finally(() => setIsLoadingDesks(false));
+            } else {
+                setIsLoadingDesks(false);
+            }
+        }
+    }, [deliveryType, selectedWilayaId]);
 
     useEffect(() => {
         const wilaya = wilayas.find(w => w.id === Number(selectedWilayaId));
@@ -81,9 +111,20 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
     const total = subtotal + deliveryFee;
 
     const onSubmit = async (data: CheckoutInputs) => {
+        // Validation: Verify if size is selected for products having sizes
+        const missingSize = items.find(item => item.sizes && item.sizes.length > 0 && !item.selectedSize);
+        if (missingSize) {
+            alert(language === 'ar' ? 'يرجى اختيار الحجم للمنتج: ' + missingSize.name : 'Please select a size for: ' + missingSize.name);
+            // Ideally scroll to size selector, but simple alert works for now
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const wilayaName = wilayas.find(w => w.id === Number(data.wilayaId))?.name || '';
+            const selectedDesk = (deliveryType === 'office' && selectedStopDeskId)
+                ? stopDesks.find(d => String(d.id) === selectedStopDeskId)
+                : undefined;
 
             const processedItems = items.map(item => ({
                 ...item,
@@ -106,6 +147,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                 total,
                 deliveryFee,
                 deliveryType,
+                stopDesk: selectedDesk,
                 status: 'pending' as const,
                 date: new Date().toISOString()
             };
@@ -150,15 +192,19 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                 <p className="text-blue-500 font-medium">{t('fillDetails')}</p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-blue-100 shadow-xl space-y-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="bg-gradient-to-br from-white to-blue-50/50 p-5 md:p-8 lg:p-10 rounded-[2.5rem] border-2 border-blue-100 shadow-xl shadow-blue-200/20 space-y-8 md:space-y-10">
                 {/* Personal Info */}
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="block text-sm font-black text-blue-800 uppercase tracking-widest">{t('fullName')}</label>
                         <input
                             {...register('fullName', { required: true })}
-                            className="input-field"
-                            placeholder={language === 'ar' ? 'الإسم الكامل' : 'Full Name'}
+                            className="input-field h-14 uppercase px-5 text-base md:text-lg rounded-2xl"
+                            placeholder={language === 'ar' ? 'الإسم الكامل' : 'FULL NAME'}
+                            onInput={(e) => {
+                                const target = e.target as HTMLInputElement;
+                                target.value = target.value.toUpperCase();
+                            }}
                         />
                         {errors.fullName && <p className="text-red-500 text-xs font-bold">{language === 'ar' ? 'هذا الحقل مطلوب' : 'This field is required'}</p>}
                     </div>
@@ -174,10 +220,14 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                             })}
                             type="tel"
                             inputMode="numeric"
-                            className="input-field"
+                            className="input-field h-14 px-5 text-base md:text-lg rounded-2xl tracking-widest"
                             placeholder="0XXXXXXXXX"
                             dir="ltr"
                             maxLength={10}
+                            onInput={(e) => {
+                                const target = e.target as HTMLInputElement;
+                                target.value = target.value.replace(/\D/g, '');
+                            }}
                         />
                         {errors.phone && (
                             <p className="text-red-500 text-xs font-bold">
@@ -194,7 +244,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                         <div className="relative">
                             <select
                                 {...register('wilayaId', { required: true })}
-                                className="input-field appearance-none cursor-pointer"
+                                className="input-field h-14 appearance-none cursor-pointer px-5 text-base md:text-lg rounded-2xl"
                                 dir="ltr"
                             >
                                 <option value="">{t('selectWilaya')}</option>
@@ -211,7 +261,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                         <label className="block text-sm font-black text-blue-800 uppercase tracking-widest">{t('commune')}</label>
                         <select
                             {...register('commune', { required: true })}
-                            className="input-field cursor-pointer disabled:opacity-50"
+                            className="input-field h-14 cursor-pointer disabled:opacity-50 px-5 text-base md:text-lg rounded-2xl"
                             disabled={!selectedWilayaId}
                         >
                             <option value="">{t('commune')}</option>
@@ -228,7 +278,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                     <label className="block text-sm font-black text-blue-800 uppercase tracking-widest">{t('address')}</label>
                     <textarea
                         {...register('address', { required: true })}
-                        className="input-field min-h-[80px] py-4"
+                        className="input-field min-h-[100px] py-4 px-5 text-base md:text-lg rounded-2xl"
                         placeholder={t('address')}
                     />
                     {errors.address && <p className="text-red-500 text-xs font-bold">{language === 'ar' ? 'يرجى إدخال العنوان' : 'Please enter your address'}</p>}
@@ -275,22 +325,55 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                 <label className="block text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-3">
                                     {language === 'ar' ? 'معلومات مكتب التوصيل' : 'Office Delivery Information'}
                                 </label>
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-blue-100 flex items-center justify-center flex-shrink-0">
-                                        <MapPin className="w-5 h-5 text-blue-600" />
+
+                                {isLoadingDesks ? (
+                                    <div className="flex items-center gap-3 text-blue-600">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span className="text-xs font-bold">{language === 'ar' ? 'جاري تحميل المكاتب المتوفرة...' : 'Loading available offices...'}</span>
                                     </div>
-                                    <div>
-                                        <p className="font-black text-blue-900 text-sm mb-1 uppercase tracking-tight">
-                                            Anderson / EcoTrack Office — {selectedWilaya.name}
-                                        </p>
-                                        <p className="text-xs text-blue-700 font-bold leading-relaxed opacity-80">
-                                            {language === 'ar'
-                                                ? `سيتم إرسال طردك إلى المكتب الرئيسي لشركة Anderson/EcoTrack في مركز ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. ستتلقى مكالمة هاتفية بمجرد وصول طلبك لتستلمه من هناك. (ملاحظة: إذا لم يتوفر مكتب في بلديتك، سيتم التوصيل إلى المنزل تلقائياً).`
-                                                : `Your order will be sent to the main Anderson/EcoTrack office in the center of ${selectedWilaya.name} Wilaya. You will receive a phone call once it arrives for pickup. (Note: If unavailable in your commune, it will be delivered to your home automatically).`
-                                            }
-                                        </p>
+                                ) : stopDesks.length > 0 ? (
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-blue-900">{language === 'ar' ? 'اختر المكتب الأقرب إليك' : 'Select nearest office'}</label>
+                                            <select
+                                                value={selectedStopDeskId}
+                                                onChange={(e) => setSelectedStopDeskId(e.target.value)}
+                                                className="w-full p-3 rounded-xl border border-blue-200 bg-white text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            >
+                                                {stopDesks.map(desk => (
+                                                    <option key={desk.id} value={desk.id}>
+                                                        {desk.name} — {desk.commune_name || desk.address}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        {selectedStopDeskId && (
+                                            <div className="flex items-start gap-3 pt-2">
+                                                <MapPinned className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                                <p className="text-xs text-blue-700 font-medium opacity-80 leading-relaxed">
+                                                    {stopDesks.find(d => String(d.id) === selectedStopDeskId)?.address || (language === 'ar' ? 'العنوان متوفر عند الإتصال' : 'Address available upon contact')}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-blue-100 flex items-center justify-center flex-shrink-0">
+                                            <MapPin className="w-5 h-5 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-blue-900 text-sm mb-1 uppercase tracking-tight">
+                                                Anderson / EcoTrack Office — {selectedWilaya.name}
+                                            </p>
+                                            <p className="text-xs text-blue-700 font-bold leading-relaxed opacity-80">
+                                                {language === 'ar'
+                                                    ? `سيتم إرسال طردك إلى المكتب الرئيسي لشركة Anderson/EcoTrack في مركز ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. (لم يتم العثور على مكاتب فرعية محددة في هذه الولاية حالياً).`
+                                                    : `Your order will be sent to the main Anderson/EcoTrack office in the center of ${selectedWilaya.name} Wilaya. (No specific branch offices found listed for this Wilaya currently).`
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
