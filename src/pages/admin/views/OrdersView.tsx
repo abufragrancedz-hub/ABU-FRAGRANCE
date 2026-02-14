@@ -94,8 +94,31 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                 // Use current form settings for the sync
                 const orderToSync = { ...selectedOrder, deliveryType: shippingForm.deliveryType };
                 const result = await provider.createOrder(orderToSync, credentials);
-                setShippingForm(prev => ({ ...prev, trackingNumber: result.trackingNumber }));
-                alert("Order Synced Successfully! Tracking Number: " + result.trackingNumber);
+
+                // If the provider automatically switched delivery type (e.g. EcoTrack StopDesk -> Domicile)
+                const finalDeliveryType = (result.actualDeliveryType as DeliveryType) || shippingForm.deliveryType;
+
+                setShippingForm(prev => ({
+                    ...prev,
+                    trackingNumber: result.trackingNumber,
+                    deliveryType: finalDeliveryType
+                }));
+
+                // Update the order immediately with the tracking number AND the potentially new delivery type
+                await updateOrder(selectedOrder.id, {
+                    carrier: shippingForm.carrier,
+                    trackingNumber: result.trackingNumber,
+                    deliveryType: finalDeliveryType,
+                    status: 'shipped' // Auto-move to shipped if synced? Or just save tracking. 
+                });
+
+                let msg = "Order Synced Successfully!\nTracking: " + result.trackingNumber;
+                if (result.note) msg += "\n\n⚠️ " + result.note;
+                if (finalDeliveryType !== shippingForm.deliveryType) {
+                    msg += `\nDelivery type updated to: ${finalDeliveryType.toUpperCase()}`;
+                }
+
+                alert(msg);
             } else {
                 alert("Provider not supported for auto-sync yet.");
             }

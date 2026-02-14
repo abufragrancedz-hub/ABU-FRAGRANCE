@@ -97,14 +97,31 @@ export const ecotrackProvider: DeliveryProvider = {
                 throw new Error(`No tracking number in response: ${JSON.stringify(data)}`);
             }
 
-            // 422 ERROR — check if it's a StopDesk issue
+            // 422 ERROR — check if it's a StopDesk issue and auto-retry
             if (response.status === 422 && isOffice) {
                 const errText = JSON.stringify(data).toLowerCase();
                 if (errText.includes('stop') || errText.includes('desk') || errText.includes('disponible') || errText.includes('commune')) {
-                    throw new Error(
-                        `⚠️ Stop Desk (Office Pickup) is NOT available for this commune "${order.customer.commune}". ` +
-                        `Please switch to "Domicile" delivery and sync again, or contact the customer.`
-                    );
+                    console.log("⚠️ StopDesk rejected for this commune. Retrying as domicile per user preference...");
+                    payload.stop_desk = 0; // Force Domicile
+
+                    const retry = await callEcoTrackAPI(token, payload);
+                    console.log("=== ECOTRACK RETRY (DOMICILE) ===", retry.response.status, JSON.stringify(retry.data, null, 2));
+
+                    if (retry.response.ok && retry.data.status !== false) {
+                        const tracking = findTrackingInResponse(retry.data);
+                        const label = retry.data.label_url || retry.data.order?.label_url || retry.data.label || '#';
+                        if (tracking) {
+                            return {
+                                trackingNumber: tracking,
+                                labelUrl: label,
+                                actualDeliveryType: 'domicile', // Explicitly update delivery type
+                                note: 'StopDesk was not available. Automatically switched to Domicile.'
+                            };
+                        }
+                    }
+                    // If retry also failed, throw error
+                    const retryErr = retry.data.message || JSON.stringify(retry.data);
+                    throw new Error(`StopDesk unavailable & Domicile retry failed: ${retryErr}`);
                 }
             }
 
