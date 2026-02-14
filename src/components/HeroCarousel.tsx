@@ -75,8 +75,12 @@ export const HeroCarousel: React.FC = () => {
                 >
                     <img
                         src={fragrances[currentIndex].image}
+                        srcSet={`${fragrances[currentIndex].image}&w=640 640w, ${fragrances[currentIndex].image}&w=1024 1024w, ${fragrances[currentIndex].image}&w=2000 2000w`}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
                         alt={fragrances[currentIndex].name}
                         className="w-full h-full object-cover opacity-70"
+                        loading={currentIndex === 0 ? "eager" : "lazy"}
+                        fetchPriority={currentIndex === 0 ? "high" : "auto"}
                     />
                 </motion.div>
             </AnimatePresence>
