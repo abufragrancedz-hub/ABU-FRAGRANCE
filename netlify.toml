@@ -3,6 +3,7 @@
   publish = "dist"
 
 [[redirects]]
+  # API Proxy for EcoTrack (forces 200 rewrite)
   from = "/api/ecotrack/*"
   to = "https://anderson-ecommerce.ecotrack.dz/api/:splat"
   status = 200
