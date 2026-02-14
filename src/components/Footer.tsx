@@ -61,16 +61,33 @@ export const Footer: React.FC = () => {
                     {/* Map */}
                     <div>
                         <h3 className="text-xl font-bold mb-6 text-accent">{t('ourLocation')}</h3>
-                        <div className="rounded-xl overflow-hidden h-48 border border-white/10 shadow-lg">
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d123169.49153503789!2d2.8573694126446205!3d36.69354962008073!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128fb3003d14dd17%3A0x49e7e9b35606453b!2z2KPYqNmIINin2YTYudi32YjYsQ!5e1!3m2!1sen!2sdz!4v1771095547970!5m2!1sen!2sdz"
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                allowFullScreen
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                            ></iframe>
+                        <div className="rounded-xl overflow-hidden h-48 border border-white/10 shadow-lg relative bg-gray-800 flex items-center justify-center group">
+                            {/* Map Facade (Load on click) */}
+                            <div
+                                className="absolute inset-0 bg-cover opacity-30 group-hover:opacity-40 transition-opacity"
+                                style={{ backgroundImage: 'linear-gradient(to bottom right, #2C2C2C, #1A1A1A)' }}
+                            ></div>
+
+                            <button
+                                onClick={(e) => {
+                                    const container = e.currentTarget.parentElement;
+                                    if (container) {
+                                        container.innerHTML = `<iframe 
+                                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d123169.49153503789!2d2.8573694126446205!3d36.69354962008073!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128fb3003d14dd17%3A0x49e7e9b35606453b!2z2KPYqNmIINin2YTYudi32YjYsQ!5e1!3m2!1sen!2sdz!4v1771095547970!5m2!1sen!2sdz" 
+                                            width="100%" 
+                                            height="100%" 
+                                            style="border:0;" 
+                                            allowfullscreen="" 
+                                            loading="lazy" 
+                                            referrerpolicy="no-referrer-when-downgrade">
+                                        </iframe>`;
+                                    }
+                                }}
+                                className="relative z-10 px-6 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white font-bold transition-all flex items-center gap-2 group-hover:scale-105"
+                            >
+                                <MapPin className="w-4 h-4 text-accent" />
+                                {t('ourLocation')}
+                            </button>
                         </div>
                     </div>
                 </div>
