@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4A0404;
+  --color-secondary: #D4AF37;
+  --color-action: #D4AF37;
+  --font-sans: 'Montserrat', 'sans-serif';
+  --font-arabic: 'Noto Sans Arabic', 'sans-serif';
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100%;
+    -webkit-text-size-adjust: 100%;
+    position: relative;
+    overscroll-behavior-x: none;
+  }
+
+  body {
+    @apply antialiased font-sans transition-colors duration-300;
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    background: linear-gradient(135deg, #FAF5EF 0%, #F5E6CC 100%);
+    color: #2C0202;
+    min-width: 320px;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    position: relative;
+    overscroll-behavior-x: none;
+  }
+
+  .font-arabic {
+    @apply font-arabic;
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    @apply max-w-full h-auto;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-4 bg-[#4A0404] text-[#D4AF37] rounded-2xl font-bold hover:bg-[#5e0505] transition-all active:scale-95 shadow-lg hover:shadow-[#4A0404]/30 cursor-pointer flex items-center justify-center border border-[#D4AF37]/20;
+  }
+
+  .input-field {
+    @apply w-full px-5 py-4 rounded-xl border-2 border-[#D4AF37]/30 focus:border-[#4A0404] focus:ring-0 outline-none transition-all bg-white text-lg text-[#4A0404] placeholder:text-[#4A0404]/40;
+  }
+
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-sm border-2 border-[#D4AF37]/20 shadow-lg shadow-[#4A0404]/10 rounded-[2rem];
+  }
+
+  .sticky-bottom-cta {
+    @apply fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t-2 border-[#D4AF37]/20 z-40 md:hidden;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#F5E6CC]/30;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[#D4AF37]/60 rounded-full hover:bg-[#4A0404] transition-colors;
+}
