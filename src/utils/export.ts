@@ -41,7 +41,7 @@ export const exportOrdersToPDF = async (orders: Order[]) => {
 
     // Table Data
     const tableData = orders.map(order => [
-        order.id.slice(0, 8),
+        order.orderNumber ? `#${order.orderNumber}` : order.id.slice(0, 8),
         new Date(order.date).toLocaleDateString(),
         order.customer.fullName,
         order.customer.phone,
@@ -89,8 +89,8 @@ export const exportOrdersToPDF = async (orders: Order[]) => {
 export const exportOrdersToExcel = (orders: Order[]) => {
     // Flatten data for Excel - Excel handles Arabic text natively
     const excelData = orders.map(order => ({
-        'ID': order.id,
-        'رقم الطلب': order.id.slice(0, 8),
+        'Order ID': order.id,
+        'Order Number / رقم الطلب': order.orderNumber || order.id.slice(0, 8),
         'Date / التاريخ': new Date(order.date).toLocaleDateString('ar-DZ'),
         'Customer / العميل': order.customer.fullName,
         'Phone / الهاتف': order.customer.phone,
@@ -163,7 +163,7 @@ export const exportOrderReceipt = async (order: Order) => {
 
     // Order ID
     doc.setFontSize(7);
-    doc.text(`Order: ${order.id.slice(0, 8)}`, margin, y);
+    doc.text(`Order: #${order.orderNumber || order.id.slice(0, 8)}`, margin, y);
     y += 4;
     doc.text(`Date: ${new Date(order.date).toLocaleDateString()}`, margin, y);
     y += 6;
@@ -236,5 +236,5 @@ export const exportOrderReceipt = async (order: Order) => {
     y += 4;
     doc.text('Thank you for your order!', pageWidth / 2, y, { align: 'center' });
 
-    doc.save(`receipt_${order.id.slice(0, 8)}.pdf`);
+    doc.save(`receipt_${order.orderNumber || order.id.slice(0, 8)}.pdf`);
 };

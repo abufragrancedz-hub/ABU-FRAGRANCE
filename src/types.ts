@@ -45,6 +45,7 @@ export type DeliveryType = 'office' | 'domicile';
 
 export interface Order {
     id: string;
+    orderNumber?: number;
     customer: {
         fullName: string;
         phone: string;

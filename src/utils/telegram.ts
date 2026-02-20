@@ -15,7 +15,7 @@ export const sendOrderToTelegram = async (order: Order) => {
     ).join('\n\n');
 
     const message = `
-📦 *NEW ORDER #${order.id.slice(0, 8)}*
+📦 *NEW ORDER #${order.orderNumber || order.id.slice(0, 8)}*
 ----------------------------
 👤 *Customer*: ${order.customer.fullName}
 📱 *Phone*: ${order.customer.phone}

@@ -1,10 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { CheckCircle, ArrowRight, Hash } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { Order } from '../types';
 
 export const Success: React.FC = () => {
     const { t, language } = useLanguage();
+    const location = useLocation();
+    const order = location.state?.order as Order;
 
     return (
         <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-gray-50/50">
@@ -15,9 +18,18 @@ export const Success: React.FC = () => {
                     </div>
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 tracking-tight leading-tight">
+                <h1 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 tracking-tight leading-tight">
                     {t('successMessage')}
                 </h1>
+
+                {order && (
+                    <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-3 rounded-2xl font-black mb-8 animate-in slide-in-from-bottom duration-1000">
+                        <Hash className="w-5 h-5" />
+                        <span className="text-xl tracking-tighter uppercase">
+                            {language === 'ar' ? 'رقم الطلب' : 'Order Number'}: {order.orderNumber || order.id.slice(0, 8)}
+                        </span>
+                    </div>
+                )}
 
                 <p className="text-gray-500 mb-12 text-lg md:text-xl font-medium leading-relaxed">
                     {t('successMessageDetail')}

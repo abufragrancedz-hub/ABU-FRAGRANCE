@@ -9,7 +9,8 @@ import {
     deleteDoc,
     doc,
     DocumentData,
-    QueryDocumentSnapshot
+    QueryDocumentSnapshot,
+    runTransaction
 } from 'firebase/firestore';
 
 interface ShopContextType {
@@ -18,7 +19,7 @@ interface ShopContextType {
     addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
     deleteProduct: (id: string) => Promise<void>;
     updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
-    addOrder: (order: Order) => Promise<void>;
+    addOrder: (order: Order) => Promise<Order>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -80,13 +81,32 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const addOrder = async (order: Order) => {
         try {
+            // Get next order number
+            const metadataRef = doc(db, 'metadata', 'orders');
+            const nextOrderNumber = await runTransaction(db, async (transaction) => {
+                const metadataDoc = await transaction.get(metadataRef);
+                let nextNum = 1;
+                if (metadataDoc.exists()) {
+                    nextNum = (metadataDoc.data().lastNumber || 0) + 1;
+                }
+                transaction.set(metadataRef, { lastNumber: nextNum }, { merge: true });
+                return nextNum;
+            });
+
+            // Add order number to order
+            const orderWithNumber = {
+                ...order,
+                orderNumber: nextOrderNumber
+            };
+
             // Remove any undefined values as Firestore doesn't support them
-            const sanitizedOrder = JSON.parse(JSON.stringify(order));
+            const sanitizedOrder = JSON.parse(JSON.stringify(orderWithNumber));
 
             // Log for debugging
-            console.log("Saving sanitized order:", sanitizedOrder);
+            console.log("Saving sanitized order with number:", sanitizedOrder);
 
             await addDoc(collection(db, 'orders'), sanitizedOrder);
+            return orderWithNumber;
         } catch (error) {
             console.error("Error adding order:", error);
             throw error;

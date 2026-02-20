@@ -22,8 +22,8 @@ export const Footer: React.FC = () => {
                         <p className="text-gray-400 mb-6">{t('heroSubtitle')}</p>
                         <div className="flex space-x-6">
                             <a href="https://www.facebook.com/profile.php?id=61578060434563" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition transform hover:scale-110"><Facebook /></a>
-                            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition transform hover:scale-110"><Instagram /></a>
-                            <a href="#" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition transform hover:scale-110">
+                            <a href="https://www.instagram.com/abu.fragrancedz?igsh=OXE3aDB6b2p6cnNw" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition transform hover:scale-110"><Instagram /></a>
+                            <a href="https://www.tiktok.com/@abu.fragrancedz?_r=1&_t=ZS-93yiQlQFG48" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition transform hover:scale-110">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"

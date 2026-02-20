@@ -80,7 +80,8 @@ export const HeroCarousel: React.FC = () => {
                         alt={fragrances[currentIndex].name}
                         className="w-full h-full object-cover opacity-70"
                         loading={currentIndex === 0 ? "eager" : "lazy"}
-                        fetchPriority={currentIndex === 0 ? "high" : "auto"}
+                        // @ts-ignore
+                        fetchpriority={currentIndex === 0 ? "high" : "auto"}
                     />
                 </motion.div>
             </AnimatePresence>

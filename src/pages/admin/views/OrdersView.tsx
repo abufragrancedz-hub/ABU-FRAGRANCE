@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trash2, CheckCircle, Clock, Truck, ExternalLink, X, Box, RefreshCw, FileText, FileSpreadsheet, Eye, MapPin, Phone, User, RotateCcw, Home, Building2, Search } from 'lucide-react';
 import { Order, DeliveryType } from '../../../types';
 import { CARRIERS, getTrackingUrl, Carrier } from '../../../utils/tracking';
@@ -30,6 +30,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
         const q = searchQuery.toLowerCase();
         return (
             order.id.toLowerCase().includes(q) ||
+            (order.orderNumber && order.orderNumber.toString().includes(q)) ||
             order.customer.fullName.toLowerCase().includes(q) ||
             order.customer.phone.includes(q) ||
             (order.trackingNumber && order.trackingNumber.toLowerCase().includes(q)) ||
@@ -223,7 +224,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                     <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                         {filteredOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
-                                <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">#{order.id.slice(0, 8)}</td>
+                                <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">#{order.orderNumber || order.id.slice(0, 8)}</td>
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-slate-900 dark:text-white">{order.customer.fullName}</div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">{order.customer.phone}</div>
@@ -329,7 +330,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                     <div key={order.id} className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700">
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="font-bold text-slate-900 dark:text-white">Order #{order.id.slice(0, 8)}</h3>
+                                <h3 className="font-bold text-slate-900 dark:text-white">Order #{order.orderNumber || order.id.slice(0, 8)}</h3>
                                 <p className="text-xs text-gray-500 mt-1">{new Date(order.date).toLocaleDateString()}</p>
                             </div>
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider
@@ -425,7 +426,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <Box className="w-5 h-5 text-blue-600" />
-                                    Order #{selectedOrder.id.slice(0, 8)}
+                                    Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                                 </h3>
                                 <p className="text-sm text-gray-500 mt-1">{new Date(selectedOrder.date).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}</p>
                             </div>
@@ -553,7 +554,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold flex items-center">
                                 <Box className="w-5 h-5 mr-2" />
-                                Ship Order #{selectedOrder.id.slice(0, 8)}
+                                Ship Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                             </h3>
                             <button onClick={() => setShippingModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />

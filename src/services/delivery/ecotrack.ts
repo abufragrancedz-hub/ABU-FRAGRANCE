@@ -51,23 +51,7 @@ export const ecotrackProvider: DeliveryProvider = {
         const fallbackDesks: StopDesk[] = andersonOffices;
         const specificDesks = fallbackDesks.filter(d => d.wilaya_id == wilayaId);
 
-        if (specificDesks.length > 0) {
-            return specificDesks;
-        }
-
-        // If no specific desk found for this Wilaya, generate a generic one to ensure dropdown always appears
-        const targetWilaya = wilayas.find(w => w.id === wilayaId);
-        if (targetWilaya) {
-            return [{
-                id: 99000 + wilayaId,
-                name: `Bureau ${targetWilaya.name} (Centre)`,
-                address: `Bureau Principal EcoTrack, ${targetWilaya.name}`,
-                wilaya_id: wilayaId,
-                commune_name: targetWilaya.name
-            }];
-        }
-
-        return [];
+        return specificDesks;
     },
 
     createOrder: async (order: Order, credentials?: DeliveryAPICredentials) => {
@@ -168,7 +152,7 @@ export const ecotrackProvider: DeliveryProvider = {
             throw error;
         }
     },
-    getOrderStatus: async (trackingNumber: string, credentials?: DeliveryAPICredentials) => {
+    getOrderStatus: async (_trackingNumber: string, _credentials?: DeliveryAPICredentials) => {
         // API endpoint /tracking/info is returning 404.
         // Disabling fetch to prevent console errors.
         // In a real scenario, this would check the API.

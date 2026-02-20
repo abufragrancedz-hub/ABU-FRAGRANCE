@@ -13,7 +13,7 @@ interface AdminLayoutProps {
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, setActiveTab }) => {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const { t, language } = useLanguage();
+    const { t } = useLanguage();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleLogout = () => {
@@ -45,13 +45,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, s
                     flex flex-col h-full shrink-0 ${!isSidebarOpen && 'invisible md:visible'}`}
             >
                 <div className="h-20 flex items-center justify-center border-b border-gray-100 relative shrink-0 px-4">
-                    <div className={`flex flex-col items-center justify-center ${!isSidebarOpen && 'md:hidden'}`}>
-                        <span className="font-black text-lg tracking-wider text-primary leading-none uppercase">Abu Fragrance</span>
-                        <span className="font-bold text-[10px] tracking-[0.2em] text-secondary mt-1 uppercase">Fragrance</span>
+                    <div className={`flex items-center gap-3 ${!isSidebarOpen && 'md:hidden'}`}>
+                        <img src="/logo.jpg" alt="Logo" className="h-10 w-auto object-contain rounded-lg" />
+                        <div className="flex flex-col items-start justify-center">
+                            <span className="font-black text-sm tracking-tight text-primary leading-none uppercase">Abu Fragrance</span>
+                            <span className="font-bold text-[8px] tracking-[0.2em] text-secondary mt-1 uppercase">Dashboard</span>
+                        </div>
                     </div>
-                    <span className={`font-black text-2xl tracking-tight text-primary hidden ${!isSidebarOpen && 'md:block'}`}>
-                        A
-                    </span>
+                    <div className={`hidden ${!isSidebarOpen && 'md:flex'} items-center justify-center`}>
+                        <img src="/logo.jpg" alt="Logo" className="h-8 w-auto object-contain rounded-lg" />
+                    </div>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
                         className="absolute right-4 md:hidden text-gray-500"
@@ -102,9 +105,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, s
             <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative w-full">
                 {/* Mobile Header */}
                 <header className="bg-white border-b border-gray-200 h-16 flex items-center px-4 md:hidden sticky top-0 z-10 justify-between shrink-0">
-                    <div className="flex flex-col items-start">
-                        <span className="font-black text-sm tracking-wider text-primary leading-none uppercase">Abu Fragrance</span>
-                        <span className="font-bold text-[8px] tracking-[0.2em] text-secondary mt-0.5 uppercase">Admin Control</span>
+                    <div className="flex items-center gap-3">
+                        <img src="/logo.jpg" alt="Logo" className="h-8 w-auto object-contain rounded-lg" />
+                        <div className="flex flex-col items-start leading-tight">
+                            <span className="font-black text-xs tracking-wider text-primary uppercase">Abu Fragrance</span>
+                            <span className="font-bold text-[7px] tracking-[0.2em] text-secondary uppercase">Admin Control</span>
+                        </div>
                     </div>
                     <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-gray-600 bg-gray-50 rounded-lg">
                         <Menu className="w-6 h-6" />

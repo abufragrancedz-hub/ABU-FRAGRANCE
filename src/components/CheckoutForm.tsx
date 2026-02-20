@@ -119,6 +119,12 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
             return;
         }
 
+        // Validation: Verify if office is selected when deliveryType is 'office'
+        if (deliveryType === 'office' && (!selectedStopDeskId || stopDesks.length === 0)) {
+            alert(language === 'ar' ? 'يرجى اختيار مكتب التوصيل الأقرب إليك' : 'Please select a delivery office nearest to you');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const wilayaName = wilayas.find(w => w.id === Number(data.wilayaId))?.name || '';
@@ -152,17 +158,17 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                 date: new Date().toISOString()
             };
 
-            // Send to Telegram (don't block if it fails)
+            // 1. Save order and get final order with number
+            const finalOrder = await addOrder(order);
+
+            // 2. Send to Telegram with the generated order number (don't block)
             try {
-                await sendOrderToTelegram(order);
+                await sendOrderToTelegram(finalOrder);
             } catch (err) {
                 console.error("Telegram notification failed:", err);
             }
 
-            // Save order
-            await addOrder(order);
-
-            navigate('/success', { state: { order } });
+            navigate('/success', { state: { order: finalOrder } });
         } catch (error) {
             console.error("Checkout error:", error);
             alert("There was an error processing your order. Please try again.");
@@ -331,7 +337,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                         <Loader2 className="w-5 h-5 animate-spin" />
                                         <span className="text-xs font-bold">{language === 'ar' ? 'جاري تحميل المكاتب المتوفرة...' : 'Loading available offices...'}</span>
                                     </div>
-                                ) : stopDesks.length > 0 ? (
+                                ) : (
                                     <div className="space-y-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-blue-900">{language === 'ar' ? 'اختر المكتب الأقرب إليك' : 'Select nearest office'}</label>
@@ -347,7 +353,27 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                                 ))}
                                             </select>
                                         </div>
-                                        {selectedStopDeskId && (
+
+                                        {stopDesks.length === 0 && (
+                                            <div className="flex flex-col items-center justify-center p-6 bg-red-100/50 rounded-xl border border-red-200 text-center space-y-3 animate-in fade-in zoom-in duration-300">
+                                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                                    <MapPin className="w-5 h-5 text-red-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-red-900 text-[10px] uppercase tracking-wider">
+                                                        {language === 'ar' ? 'لا توجد مكاتب متوفرة' : 'No offices available'}
+                                                    </p>
+                                                    <p className="text-[10px] text-red-700 font-bold leading-relaxed opacity-80 mt-1">
+                                                        {language === 'ar'
+                                                            ? `عذراً، لا توجد مكاتب توصيل متوفرة حالياً في ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. يرجى اختيار التوصيل للمنزل.`
+                                                            : `Sorry, there are no delivery offices currently available in ${selectedWilaya.name} Wilaya. Please select Domicile delivery.`
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {selectedStopDeskId && stopDesks.length > 0 && (
                                             <div className="flex items-start gap-3 pt-2">
                                                 <MapPinned className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                                                 <p className="text-xs text-blue-700 font-medium opacity-80 leading-relaxed">
@@ -355,23 +381,6 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                                 </p>
                                             </div>
                                         )}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <MapPin className="w-5 h-5 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-blue-900 text-sm mb-1 uppercase tracking-tight">
-                                                Anderson / EcoTrack Office — {selectedWilaya.name}
-                                            </p>
-                                            <p className="text-xs text-blue-700 font-bold leading-relaxed opacity-80">
-                                                {language === 'ar'
-                                                    ? `سيتم إرسال طردك إلى المكتب الرئيسي لشركة Anderson/EcoTrack في مركز ولاية ${selectedWilaya.nameAr || selectedWilaya.name}. (لم يتم العثور على مكاتب فرعية محددة في هذه الولاية حالياً).`
-                                                    : `Your order will be sent to the main Anderson/EcoTrack office in the center of ${selectedWilaya.name} Wilaya. (No specific branch offices found listed for this Wilaya currently).`
-                                                }
-                                            </p>
-                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -438,7 +447,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (deliveryType === 'office' && (!selectedStopDeskId || stopDesks.length === 0))}
                     className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-blue-700 transition-all flex justify-center items-center gap-3 shadow-xl shadow-blue-600/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {isSubmitting ? (
