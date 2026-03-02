@@ -90,7 +90,7 @@ export const Products: React.FC = () => {
 
             {currentItems.length > 0 ? (
                 <div className="space-y-16">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-10">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8 lg:gap-10">
                         {currentItems.map(product => (
                             <ProductCard key={product.id} product={product} />
                         ))}

@@ -14,6 +14,8 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const initialProductState: Partial<Product> = {
         name: '', description: '', price: 0, category: '', image: '', images: [], sizes: [], isPromo: false, oldPrice: 0
@@ -33,6 +35,16 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleEdit = (product: Product) => {
         setEditingProduct(product);
@@ -155,7 +167,10 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
                         placeholder="Search products..."
                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white dark:bg-slate-800 dark:text-white"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
                     />
                 </div>
                 <button
@@ -173,8 +188,8 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+                {currentProducts.map((product) => (
                     <div key={product.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow group">
                         <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-slate-700">
                             <img
@@ -193,36 +208,70 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
                                     Discounts
                                 </div>
                             )}
-                            <div className="absolute inset-0 bg-transparent md:bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex items-start justify-end md:items-center md:justify-center p-2 md:p-0 gap-2">
+                            <div className="absolute inset-0 bg-transparent md:bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex items-end justify-end md:items-center md:justify-center p-2 md:p-0 gap-2">
                                 <button
                                     onClick={() => handleEdit(product)}
-                                    className="p-2 bg-white text-primary rounded-full hover:bg-primary/5 shadow-md border border-gray-100"
+                                    className="p-1.5 sm:p-2 bg-white text-primary rounded-full hover:bg-primary/5 shadow-md border border-gray-100"
                                 >
-                                    <Edit className="w-4 h-4" />
+                                    <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
                                     onClick={() => deleteProduct(product.id)}
-                                    className="p-2 bg-white text-red-600 rounded-full hover:bg-red-50 shadow-md border border-gray-100"
+                                    className="p-1.5 sm:p-2 bg-white text-red-600 rounded-full hover:bg-red-50 shadow-md border border-gray-100"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                             </div>
                         </div>
-                        <div className="p-4">
-                            <h3 className="font-bold text-slate-900 dark:text-white truncate">{product.name}</h3>
-                            <div className="flex justify-between items-center mt-2">
-                                <span className="text-sm text-gray-500 dark:text-gray-400">{product.category}</span>
-                                <div className="text-right">
+                        <div className="p-2 sm:p-4">
+                            <h3 className="font-bold text-slate-900 dark:text-white truncate text-sm sm:text-base">{product.name}</h3>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-1 sm:mt-2">
+                                <span className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400">{product.category}</span>
+                                <div className="text-left sm:text-right mt-1 sm:mt-0">
                                     {(product.oldPrice || 0) > product.price && (
-                                        <span className="text-xs text-gray-400 dark:text-gray-500 line-through block">{product.oldPrice} DZD</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 line-through block leading-none">{product.oldPrice} DZD</span>
                                     )}
-                                    <span className="font-bold text-slate-900 dark:text-white">{product.price || 'N/A'} DZD</span>
+                                    <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-base">{product.price || 'N/A'} DZD</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8 pb-4">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded-lg border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors text-sm font-medium"
+                    >
+                        Prev
+                    </button>
+                    <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-lg border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors text-sm font-medium"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
 
             {/* Modal Form */}
             {isFormOpen && (
