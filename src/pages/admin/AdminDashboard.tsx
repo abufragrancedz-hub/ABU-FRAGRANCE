@@ -97,7 +97,8 @@ export const AdminDashboard: FC = () => {
                 images: productData.images || [],
                 sizes: productData.sizes || [],
                 isPromo: productData.isPromo || false,
-                oldPrice: productData.oldPrice ? Number(productData.oldPrice) : 0
+                oldPrice: productData.oldPrice ? Number(productData.oldPrice) : 0,
+                freeDelivery: productData.freeDelivery || false
             };
 
             if (productData.id) {

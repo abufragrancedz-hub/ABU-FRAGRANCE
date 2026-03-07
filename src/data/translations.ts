@@ -102,7 +102,8 @@ export const translations = {
         save: 'وفر',
         selectedPack: 'الباقة المختارة',
         saving: 'توفير',
-        whatsappCta: 'تواصل معنا مباشرة، اضغط هنا'
+        whatsappCta: 'تواصل معنا مباشرة، اضغط هنا',
+        freeDelivery: 'توصيل مجاني'
     },
     en: {
         logoText: 'Abu Fragrance ',
@@ -205,7 +206,8 @@ export const translations = {
         save: 'Save',
         selectedPack: 'Selected Pack',
         saving: 'Saving',
-        whatsappCta: 'Contact us directly, click here'
+        whatsappCta: 'Contact us directly, click here',
+        freeDelivery: 'Free Delivery'
     },
     fr: {
         logoText: 'Abu Fragrance',
@@ -308,6 +310,7 @@ export const translations = {
         save: 'Economisez',
         selectedPack: 'Pack sélectionné',
         saving: 'Économie',
-        whatsappCta: 'Contactez-nous directement, cliquez ici'
+        whatsappCta: 'Contactez-nous directement, cliquez ici',
+        freeDelivery: 'Livraison Gratuite'
     }
 };

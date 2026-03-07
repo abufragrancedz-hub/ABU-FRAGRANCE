@@ -90,17 +90,17 @@
   }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+/* Hide scrollbar for Chrome, Safari and Opera */
+*::-webkit-scrollbar {
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-[#F5E6CC]/30;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-[#D4AF37]/60 rounded-full hover:bg-[#4A0404] transition-colors;
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Slow bounce for WhatsApp CTA */

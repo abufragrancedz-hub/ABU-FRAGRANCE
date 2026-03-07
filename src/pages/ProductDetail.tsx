@@ -141,6 +141,12 @@ export const ProductDetail: React.FC = () => {
                                     <span className="truncate">{t('limitedOffer')} - {Math.round(((currentOldPrice - basePrice) / currentOldPrice) * 100)}%</span>
                                 </div>
                             )}
+                            {product.freeDelivery && (
+                                <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-black border border-emerald-100 uppercase tracking-widest shadow-sm">
+                                    <Truck className="w-3 md:w-4 h-3 md:h-4" />
+                                    <span>{t('freeDelivery')}</span>
+                                </div>
+                            )}
                             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-blue-900 leading-tight tracking-tight break-words drop-shadow-sm">{product.name}</h1>
                             <div className="flex flex-wrap items-center gap-3 md:gap-4 text-2xl sm:text-3xl md:text-4xl font-black">
                                 <span className="text-blue-700" dir="ltr">{basePrice > 0 ? basePrice : product.price} {t('currency')}</span>
@@ -157,7 +163,7 @@ export const ProductDetail: React.FC = () => {
                         <div className="w-full overflow-x-auto pb-3 md:pb-4">
                             <div className="flex md:grid md:grid-cols-2 gap-3 md:gap-4 min-w-max md:min-w-0 pr-4">
                                 {[
-                                    { icon: Truck, text: t('shipping48'), subtext: t('readyToShip'), color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+                                    { icon: Truck, text: product.freeDelivery ? t('freeDelivery') : t('shipping48'), subtext: t('readyToShip'), color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
                                     { icon: ShieldCheck, text: t('cashOnDelivery'), subtext: t('secure100'), color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
                                     { icon: Clock, text: t('support247'), subtext: t('contact'), color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
                                     { icon: Check, text: t('qualityGuaranteed'), subtext: t('exclusive'), color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },

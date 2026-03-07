@@ -5,8 +5,7 @@ import {
     collection,
     getDocs,
     setDoc,
-    doc,
-    timestamp
+    doc
 } from 'firebase/firestore';
 import { CARRIERS } from '../../../utils/tracking';
 

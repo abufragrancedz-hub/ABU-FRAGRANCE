@@ -1,5 +1,5 @@
 import { useState, useRef, FC, FormEvent, ChangeEvent } from 'react';
-import { Plus, Edit, Trash2, Search, X, Upload, Percent } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, X, Upload, Percent, Truck } from 'lucide-react';
 import { Product, ProductSize, QuantityDiscount } from '../../../types';
 import { uploadToCloudinary } from '../../../utils/cloudinary';
 
@@ -18,7 +18,7 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
     const itemsPerPage = 10;
 
     const initialProductState: Partial<Product> = {
-        name: '', description: '', price: 0, category: '', image: '', images: [], sizes: [], isPromo: false, oldPrice: 0
+        name: '', description: '', price: 0, category: '', image: '', images: [], sizes: [], isPromo: false, oldPrice: 0, freeDelivery: false
     };
 
     const [currentProduct, setCurrentProduct] = useState<Partial<Product>>(initialProductState);
@@ -208,6 +208,12 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
                                     Discounts
                                 </div>
                             )}
+                            {product.freeDelivery && (
+                                <div className="absolute top-8 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                                    <Truck className="w-3 h-3" />
+                                    FREE DELIVERY
+                                </div>
+                            )}
                             <div className="absolute inset-0 bg-transparent md:bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex items-end justify-end md:items-center md:justify-center p-2 md:p-0 gap-2">
                                 <button
                                     onClick={() => handleEdit(product)}
@@ -255,8 +261,8 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
                                 key={page}
                                 onClick={() => handlePageChange(page)}
                                 className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-slate-900 text-white'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 {page}
@@ -330,6 +336,20 @@ export const ProductsView: FC<ProductsViewProps> = ({ products, deleteProduct, s
                                 />
                                 <label htmlFor="isPromo" className="text-sm font-bold text-primary select-none cursor-pointer">
                                     Mark as "PROMO"
+                                </label>
+                            </div>
+
+                            <div className="flex items-center gap-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                                <input
+                                    type="checkbox"
+                                    id="freeDelivery"
+                                    className="w-5 h-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                    checked={currentProduct.freeDelivery || false}
+                                    onChange={e => setCurrentProduct({ ...currentProduct, freeDelivery: e.target.checked })}
+                                />
+                                <label htmlFor="freeDelivery" className="text-sm font-bold text-emerald-800 select-none cursor-pointer flex items-center gap-2">
+                                    <Truck className="w-4 h-4" />
+                                    Enable "Free Delivery" for this product
                                 </label>
                             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, CheckCircle, Clock, Truck, ExternalLink, X, Box, RefreshCw, FileText, FileSpreadsheet, Eye, MapPin, Phone, User, RotateCcw, Home, Building2, Search } from 'lucide-react';
+import { Trash2, CheckCircle, Clock, Truck, ExternalLink, X, Box, FileText, FileSpreadsheet, Eye, MapPin, Phone, User, RotateCcw, Home, Building2, Search, RefreshCw } from 'lucide-react';
 import { Order, DeliveryType } from '../../../types';
 import { CARRIERS, getTrackingUrl, Carrier } from '../../../utils/tracking';
 import { exportOrdersToPDF, exportOrdersToExcel } from '../../../utils/export';
@@ -60,32 +60,6 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
         setShippingModalOpen(true);
     };
 
-    const checkOrderStatuses = async () => {
-        setIsSyncing(true);
-        const shippedOrders = orders.filter(o => o.status === 'shipped' && o.trackingNumber);
-
-        for (const order of shippedOrders) {
-            try {
-                const provider = getDeliveryProvider(order.carrier || 'ecotrack');
-                if (!provider) continue;
-
-                const qq = query(collection(db, 'delivery_config'), where('carrier_id', '==', order.carrier), limit(1));
-                const snapshot = await getDocs(qq);
-                const config = snapshot.empty ? null : snapshot.docs[0].data();
-
-                const credentials = config ? { apiId: config.api_id, apiToken: config.api_token } : undefined;
-                const newStatus = await provider.getOrderStatus(order.trackingNumber!, credentials);
-
-                if (newStatus !== 'shipped' && newStatus !== 'pending') {
-                    await updateOrder(order.id, { status: newStatus as any });
-                }
-            } catch (err) {
-                console.error(`Error checking status for order ${order.id}`, err);
-            }
-        }
-        setIsSyncing(false);
-    };
-
     const handleAutoSync = async () => {
         if (!selectedOrder) return;
 
@@ -138,6 +112,32 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
         } finally {
             setIsSyncing(false);
         }
+    };
+
+    const checkOrderStatuses = async () => {
+        setIsSyncing(true);
+        const shippedOrders = orders.filter(o => o.status === 'shipped' && o.trackingNumber);
+
+        for (const order of shippedOrders) {
+            try {
+                const provider = getDeliveryProvider(order.carrier || 'ecotrack');
+                if (!provider) continue;
+
+                const qq = query(collection(db, 'delivery_config'), where('carrier_id', '==', order.carrier), limit(1));
+                const snapshot = await getDocs(qq);
+                const config = snapshot.empty ? null : snapshot.docs[0].data();
+
+                const credentials = config ? { apiId: config.api_id, apiToken: config.api_token } : undefined;
+                const newStatus = await provider.getOrderStatus(order.trackingNumber!, credentials);
+
+                if (newStatus !== 'shipped' && newStatus !== 'pending') {
+                    await updateOrder(order.id, { status: newStatus as any });
+                }
+            } catch (err) {
+                console.error(`Error checking status for order ${order.id}`, err);
+            }
+        }
+        setIsSyncing(false);
     };
 
     const handleShipOrder = (e: React.FormEvent) => {
@@ -474,7 +474,12 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">Fee</span>
-                                            <span className="font-bold">{selectedOrder.deliveryFee || 0} DZD</span>
+                                            <div className="text-right">
+                                                <span className="font-bold">{selectedOrder.deliveryFee || 0} DZD</span>
+                                                {selectedOrder.deliveryFee === 0 && (selectedOrder.actualDeliveryFee || 0) > 0 && (
+                                                    <p className="text-[10px] text-amber-600 font-bold uppercase tracking-tighter">Cost: {selectedOrder.actualDeliveryFee} DZD</p>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">Status</span>
@@ -615,13 +620,13 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, updateOrder, del
                                         type="button"
                                         onClick={handleAutoSync}
                                         disabled={isSyncing}
-                                        className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium flex items-center disabled:opacity-50"
-                                        title="Auto-generate/sync with carrier"
+                                        className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium flex items-center disabled:opacity-50 transition-all active:scale-95"
+                                        title="Generate/Sync with Carrier"
                                     >
                                         <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">Click the sync button to auto-generate tracking from {shippingForm.carrier}.</p>
+                                <p className="text-[10px] text-gray-500 mt-1 italic font-medium">Click the button to automatically create this order in {shippingForm.carrier} and get a tracking number.</p>
                             </div>
 
                             <div className="pt-2 flex justify-end gap-3 border-t border-gray-100">

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useShop } from '../context/ShopContext';
 import { wilayas, getDeliveryPrice } from '../data/wilayas';
 import { getCommunesByWilayaId } from '../data/communes';
-import { sendOrderToTelegram } from '../utils/telegram';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ShieldCheck, Truck, Building2, Home, MapPin, MapPinned } from 'lucide-react';
 import { CartItem, DeliveryType, StopDesk } from '../types';
@@ -31,7 +30,6 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
 
     const selectedWilayaId = watch('wilayaId');
     const [deliveryType, setDeliveryType] = useState<DeliveryType>('domicile');
-    const [deliveryFee, setDeliveryFee] = useState(0);
     const [availableCommunes, setAvailableCommunes] = useState<any[]>([]);
 
     // Stop Desk Logic
@@ -64,20 +62,13 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
     }, [deliveryType, selectedWilayaId]);
 
     useEffect(() => {
-        const wilaya = wilayas.find(w => w.id === Number(selectedWilayaId));
-        if (wilaya) {
-            setDeliveryFee(getDeliveryPrice(wilaya, deliveryType));
-        } else {
-            setDeliveryFee(0);
-        }
-
         if (selectedWilayaId) {
             const communes = getCommunesByWilayaId(Number(selectedWilayaId));
             setAvailableCommunes(communes);
         } else {
             setAvailableCommunes([]);
         }
-    }, [selectedWilayaId, deliveryType]);
+    }, [selectedWilayaId]);
 
     const calculateItemTotal = (item: CartItem) => {
         let total = item.finalPrice * item.quantity;
@@ -108,6 +99,17 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
     };
 
     const subtotal = items.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+
+    const deliveryFee = useMemo(() => {
+        const wilaya = wilayas.find(w => w.id === Number(selectedWilayaId));
+        if (!wilaya) return 0;
+
+        const hasFreeDelivery = items.some(item => item.freeDelivery);
+        if (hasFreeDelivery) return 0;
+
+        return getDeliveryPrice(wilaya, deliveryType);
+    }, [selectedWilayaId, deliveryType, items]);
+
     const total = subtotal + deliveryFee;
 
     const onSubmit = async (data: CheckoutInputs) => {
@@ -139,6 +141,8 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
 
             const orderId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+            const actualDeliveryFee = selectedWilaya ? getDeliveryPrice(selectedWilaya, deliveryType) : 0;
+
             const order = {
                 id: orderId,
                 customer: {
@@ -152,6 +156,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                 items: processedItems,
                 total,
                 deliveryFee,
+                actualDeliveryFee,
                 deliveryType,
                 stopDesk: selectedDesk,
                 status: 'pending' as const,
@@ -160,13 +165,6 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
 
             // 1. Save order and get final order with number
             const finalOrder = await addOrder(order);
-
-            // 2. Send to Telegram with the generated order number (don't block)
-            try {
-                await sendOrderToTelegram(finalOrder);
-            } catch (err) {
-                console.error("Telegram notification failed:", err);
-            }
 
             navigate('/success', { state: { order: finalOrder } });
         } catch (error) {
@@ -307,7 +305,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                             >
                                 <Building2 className="w-8 h-8 mb-1" />
                                 <span className="font-bold text-sm text-center">{getDeliveryTypeLabel('office')}</span>
-                                <span className="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full" dir="ltr">{selectedWilaya.officePrice} {t('currency')}</span>
+                                <span className="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full" dir="ltr">
+                                    {items.some(i => i.freeDelivery) ? `0 ${t('currency')}` : `${selectedWilaya.officePrice} ${t('currency')}`}
+                                </span>
                                 <span className="text-[10px] opacity-70 text-center leading-tight mt-1 px-1 font-medium">
                                     {language === 'ar' ? '*حسب توفر المكتب' : '*Subject to availability'}
                                 </span>
@@ -322,7 +322,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                             >
                                 <Home className="w-8 h-8 mb-1" />
                                 <span className="font-bold text-sm text-center">{getDeliveryTypeLabel('domicile')}</span>
-                                <span className="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full" dir="ltr">{selectedWilaya.domicilePrice} {t('currency')}</span>
+                                <span className="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full" dir="ltr">
+                                    {items.some(i => i.freeDelivery) ? `0 ${t('currency')}` : `${selectedWilaya.domicilePrice} ${t('currency')}`}
+                                </span>
                             </button>
                         </div>
 
@@ -428,7 +430,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ items }) => {
                                 {deliveryType === 'office' && <Building2 className="w-3 h-3 flex-shrink-0" />}
                                 {deliveryType === 'domicile' && <Home className="w-3 h-3 flex-shrink-0" />}
                             </span>
-                            <span className="flex-shrink-0 whitespace-nowrap" dir="ltr">{deliveryFee > 0 ? `${deliveryFee} ${t('currency')}` : (language === 'ar' ? 'مجاني' : 'Free')}</span>
+                            <span className="flex-shrink-0 whitespace-nowrap" dir="ltr">{deliveryFee > 0 ? `${deliveryFee} ${t('currency')}` : `0 ${t('currency')}`}</span>
                         </div>
                         <div className="flex justify-between items-baseline gap-4 text-xl sm:text-2xl font-black pt-4 border-t border-gray-900 text-blue-900">
                             <span className="truncate min-w-0 flex-1">{t('total').toUpperCase()}</span>

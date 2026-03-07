@@ -33,6 +33,7 @@ export interface Product {
     sizes?: ProductSize[];
     isPromo?: boolean;
     oldPrice?: number;
+    freeDelivery?: boolean;
 }
 
 export interface CartItem extends Product {
@@ -57,6 +58,7 @@ export interface Order {
     items: CartItem[];
     total: number;
     deliveryFee: number;
+    actualDeliveryFee?: number;
     deliveryType?: DeliveryType;
     status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
     date: string;
