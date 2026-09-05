@@ -1,0 +1,25 @@
+name = "abu-fragrance-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# ─── Environment Variables (non-secret) ───
+[vars]
+FIREBASE_PROJECT_ID = "abu-fragrance"
+ALLOWED_ORIGINS = "https://abu-fragrance.pages.dev,https://abufragrance.com,https://www.abufragrance.com"
+ENVIRONMENT = "production"
+
+# ─── D1 Database Binding ───
+[[d1_databases]]
+binding = "DB"
+database_name = "abu-fragrance-db"
+database_id = "95c34e46-d3fd-42c5-b09e-f6741b2b54a1"
+
+# ─── KV Namespace Binding ───
+[[kv_namespaces]]
+binding = "PRODUCTS_KV"
+id = "187935210b7c43939e9254c1414868e3"
+
+# ─── Secrets (set via `wrangler secret put`) ───
+# ADMIN_UIDS          - comma-separated Firebase UIDs for admin access
+# ECOTRACK_API_TOKEN   - EcoTrack delivery API token
+# WEBHOOK_SECRET       - Secret for verifying confirmation company webhooks
